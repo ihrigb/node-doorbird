@@ -65,7 +65,7 @@ export interface FavoriteInfo {
     value: string
 }
 
-type Schedule = ScheduleEntry[];
+export type Schedule = ScheduleEntry[];
 
 export interface ScheduleEntry {
     input: 'doorbell' | 'motion' | 'rfid',
@@ -79,21 +79,21 @@ export interface ScheduleEntryOutput {
     schedule: 'once' | ScheduleEntrySchedule
 }
 
-interface ScheduleEntrySchedule {
+export interface ScheduleEntrySchedule {
     'from-to'?: FromTo[],
     weekdays?: FromTo[]
 }
 
-interface FromTo {
+export interface FromTo {
     from: string,
     to: string
 }
 
-interface SipStatusBHA extends BaseBHA {
+export interface SipStatusBHA extends BaseBHA {
     SIP: SipStatus[]
 }
 
-interface SipStatus {
+export interface SipStatus {
     ENABLE: string,
     PRIORITIZE_APP: string,
     REGISTER_URL: string,
@@ -118,19 +118,19 @@ interface SipStatus {
     CALL_TIME_LIMIT: string
 }
 
-interface RingEvent {
+export interface RingEvent {
     intercomId: string,
     event: string,
     timestamp: Date
 }
 
-interface MotionEvent {
+export interface MotionEvent {
     intercomId: string,
     timestamp: Date
 }
 
-type RingCallback = (event: RingEvent) => void;
-type MotionCallback = (event: MotionEvent) => void;
+export type RingCallback = (event: RingEvent) => void;
+export type MotionCallback = (event: MotionEvent) => void;
 
 export class DoorbirdUdpSocket {
     private port: number;
@@ -318,7 +318,7 @@ export default class Doorbird {
         });
     }
 
-    deleteFavorite(type: FavoriteType, id: string, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
+    deleteFavorite(id: string, type: FavoriteType, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
         axios.get(this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`), this.requestConfig()).then(() => {
             successCallback();
         }).catch(err => {
@@ -341,7 +341,7 @@ export default class Doorbird {
     }
 
     updateScheduleEntry(scheduleEntry: ScheduleEntry, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        axios.post(`/bha-api/schedule.cgi`, this.requestConfig(scheduleEntry)).then(() => {
+        axios.post(this.uri(`/bha-api/schedule.cgi`), this.requestConfig(scheduleEntry)).then(() => {
             successCallback();
         }).catch(err => {
             errCallback(err);
@@ -349,7 +349,7 @@ export default class Doorbird {
         });
     }
 
-    deleteScheduleEntry(input: 'doorbell' | 'motion' | 'rfid', param: string, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
+    deleteScheduleEntry(input: 'doorbell' | 'motion' | 'rfid', param: string | null, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
         let url = `/bha-api/schedule.cgi?action=remove&input=${input}`;
         if (param) {
             url += `&param=${param}`;
@@ -453,12 +453,15 @@ export default class Doorbird {
     }
 
     private requestConfig(json?: any): AxiosRequestConfig { // eslint-disable-line @typescript-eslint/no-explicit-any
-        return {
-            data: json,
+        const requestConfig: AxiosRequestConfig = {
             headers: {
                 'Authorization': this.authHeader()
             }
         };
+        if (json !== undefined) {
+            requestConfig.data = json;
+        }
+        return requestConfig;
     }
 
     private uri(path: string): string {
