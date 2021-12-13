@@ -1,10 +1,10 @@
 import * as _sodium from 'libsodium-wrappers';
 import * as chacha from 'chacha-js';
-import * as request from 'request';
 import * as dgram from 'dgram';
+import axios, { AxiosRequestConfig } from 'axios';
 
 type EmtpyCallback = () => void;
-type ErrorCallback = (err: any) => void;
+type ErrorCallback = (err: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 type SuccessCallback<Type> = (obj: Type) => void;
 
 const udpIdentifier = Buffer.from([0xDE, 0xAD, 0xBE]);
@@ -241,78 +241,60 @@ export default class Doorbird {
     }
 
     initializeSession(successCallback: SuccessCallback<Response<SessionBHA>>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/getsession.cgi`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Response<SessionBHA> = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/getsession.cgi`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     destroySession(session: Response<SessionBHA> | string, successCallback: SuccessCallback<Response<SessionBHA>>, errCallback: ErrorCallback): void {
         if ("object" === typeof session) {
             session = session.BHA.SESSIONID;
         }
-        request.get(this.uri(`/bha-api/getsession.cgi?invalidate=${session}`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Response<SessionBHA> = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/getsession.cgi?invalidate=${session}`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     getInfo(successCallback: SuccessCallback<Response<DoorbirdInfoBHA>>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/info.cgi`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Response<DoorbirdInfoBHA> = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/info.cgi`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     openDoor(relay: string, successCallback: SuccessCallback<Response<BaseBHA>>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/open-door.cgi?r=${relay}`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Response<BaseBHA> = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/open-door.cgi?r=${relay}`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     lightOn(successCallback: SuccessCallback<Response<BaseBHA>>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/light-on.cgi`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Response<BaseBHA> = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/light-on.cgi`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     listFavorites(successCallback: SuccessCallback<Favorites>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/favorites.cgi`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Favorites = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/favorites.cgi`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     createFavorite(type: FavoriteType, favoriteInfo: FavoriteInfo, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
@@ -328,37 +310,30 @@ export default class Doorbird {
         if (id) {
             url += `&id=${id}`;
         }
-        request.get(this.uri(url), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(url), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     deleteFavorite(type: FavoriteType, id: string, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     getSchedule(successCallback: SuccessCallback<Schedule>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/schedule.cgi`), this.requestOptions(),
-            (err: any, res: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Schedule = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/schedule.cgi`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     createScheduleEntry(scheduleEntry: ScheduleEntry, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
@@ -366,14 +341,12 @@ export default class Doorbird {
     }
 
     updateScheduleEntry(scheduleEntry: ScheduleEntry, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.post(`/bha-api/schedule.cgi`, this.requestOptions(scheduleEntry),
-            (err: any) => {
-                if (err) {
-                    errCallback(err);
-                    return
-                }
-                successCallback();
-            });
+        axios.post(`/bha-api/schedule.cgi`, this.requestConfig(scheduleEntry)).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     deleteScheduleEntry(input: 'doorbell' | 'motion' | 'rfid', param: string, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
@@ -381,58 +354,48 @@ export default class Doorbird {
         if (param) {
             url += `&param=${param}`;
         }
-        request.get(this.uri(url), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(url), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     restart(successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/restart.cgi`), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(`/bha-api/restart.cgi`), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     sipRegistration(user: string, password: string, url: string, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/sip.cgi?action=registration&user=${user}&password=${password}&url=${url}`), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(`/bha-api/sip.cgi?action=registration&user=${user}&password=${password}&url=${url}`), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     sipCall(url: string, successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/sip.cgi?action=makecall&url=${url}`), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(`/bha-api/sip.cgi?action=makecall&url=${url}`), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     sipHangup(successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/sip.cgi?action=hangup`), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(`/bha-api/sip.cgi?action=hangup`), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     sipSettings(successCallback: EmtpyCallback, errCallback: ErrorCallback, enable: 0 | 1,
@@ -463,44 +426,37 @@ export default class Doorbird {
         if (anc) {
             url += `&anc=${anc}`;
         }
-        request.get(this.uri(url), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(url), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     sipStatus(successCallback: SuccessCallback<Response<SipStatusBHA>>, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/sip.cgi?action=status`), this.requestOptions(),
-            (err: any, _: request.Response, body: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                const jsun: Response<SipStatusBHA> = JSON.parse(body);
-                successCallback(jsun);
-            });
+        axios.get(this.uri(`/bha-api/sip.cgi?action=status`), this.requestConfig()).then(response => {
+            successCallback(response.data);
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
     sipSettingsReset(successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-        request.get(this.uri(`/bha-api/sip.cgi?action=reset`), this.requestOptions(),
-            (err: any) => {
-                if (err) {
-                    errCallback(err)
-                    return;
-                }
-                successCallback();
-            });
+        axios.get(this.uri(`/bha-api/sip.cgi?action=reset`), this.requestConfig()).then(() => {
+            successCallback();
+        }).catch(err => {
+            errCallback(err);
+            return;
+        });
     }
 
-    private requestOptions(json?: any): request.CoreOptions {
+    private requestConfig(json?: any): AxiosRequestConfig { // eslint-disable-line @typescript-eslint/no-explicit-any
         return {
-            json: json,
+            data: json,
             headers: {
-                Authorization: this.authHeader()
+                'Authorization': this.authHeader()
             }
         };
     }
