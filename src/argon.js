@@ -1,0 +1,43 @@
+const _sodium = require('libsodium-wrappers');
+
+console.log(Buffer.from("3q2+", "base64"));
+
+
+// example from DoorBird API Doc
+var buf = Buffer.from([
+    0xDE, 0xAD, 0xBE, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x20, 0x00, 0x77, 0x35, 0x36, 0xDC, 0xC3,
+    0x0E, 0x2E, 0x84, 0x7E, 0x0E, 0x75, 0x29, 0xE2, 0x34, 0x60, 0xCF, 0xE3, 0xFF, 0xCC, 0x52, 0x3F, 0x37,
+    0xB2, 0xF2, 0xDC, 0x1A, 0x71, 0x80, 0xF2, 0x9B, 0x2E, 0xA0, 0x27, 0xA9, 0x82, 0x41, 0x9C, 0xCE, 0x45,
+    0x9D, 0x27, 0x45, 0x2E, 0x42, 0x14, 0xBE, 0x9C, 0x74, 0xE9, 0x33, 0x3A, 0x21, 0xDB, 0x10, 0x78, 0xB9,
+    0xF6, 0x7B]);
+
+// 0xDE, 0xD, 0xBE
+var identifier = buf.slice(0, 3);
+// 0x01
+var version = buf.slice(3, 4);
+
+// 4
+var opslimit = buf.slice(4, 8).readInt32BE();
+console.log('opslimit: ' + opslimit);
+
+// 8192
+var memlimit = buf.slice(8, 12).readInt32BE();
+console.log('memlimit: ' + memlimit);
+
+var salt = buf.slice(12, 28);
+console.log('salt: ' + salt.toString('hex').toUpperCase().replace(/(.{2})/g, "0x$1 "));
+var username = "foobar0001";
+var password = "QzT3jeK3JY";
+
+const keylength = 32;
+
+async function strech() {
+    await _sodium.ready;
+    const sodium = _sodium;
+    const stretched = Buffer.from(sodium.crypto_pwhash(keylength, password.substring(0, 5), salt, opslimit, memlimit, sodium.crypto_pwhash_ALG_ARGON2I13));
+    return stretched;
+}
+
+strech().then((stretched) => {
+    console.log('stretched password: ' + stretched.toString('hex').toUpperCase().replace(/(.{2})/g, "0x$1 "));
+});
