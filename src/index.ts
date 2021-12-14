@@ -450,6 +450,14 @@ export default class Doorbird {
         return new DoorbirdUdpSocket(port, this.options.username, this.options.password);
     }
 
+    getImageUrl(): string {
+        return `${this.options.scheme}://${this.options.host}/bha-api/image.cgi?http-user=${this.options.username}&http-password=${this.options.password}`;
+    }
+
+    getVideoUrl(): string {
+        return `${this.options.scheme}://${this.options.host}/bha-api/video.cgi?http-user=${this.options.username}&http-password=${this.options.password}`;
+    }
+
     private requestConfig(json?: any): AxiosRequestConfig { // eslint-disable-line @typescript-eslint/no-explicit-any
         const requestConfig: AxiosRequestConfig = {
             headers: {
