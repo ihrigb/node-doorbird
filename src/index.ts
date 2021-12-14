@@ -133,7 +133,6 @@ export type RingCallback = (event: RingEvent) => void;
 export type MotionCallback = (event: MotionEvent) => void;
 
 export class DoorbirdUdpSocket {
-    private port: number;
     private username: string;
     private password: string;
     private server: dgram.Socket;
@@ -141,7 +140,6 @@ export class DoorbirdUdpSocket {
     private motionListeners: MotionCallback[] = [];
 
     constructor(port: 6524 | 35344, username: string, password: string) {
-        this.port = port;
         this.username = username;
         this.password = password;
         this.server = dgram.createSocket({
@@ -219,10 +217,6 @@ export class DoorbirdUdpSocket {
 
     registerMotionListener(listener: MotionCallback): void {
         this.motionListeners.push(listener);
-    }
-
-    getPort(): number {
-        return this.port;
     }
 
     close(): void {
@@ -450,6 +444,10 @@ export default class Doorbird {
             errCallback(err);
             return;
         });
+    }
+
+    startUdpSocket(port: 6524 | 35344): DoorbirdUdpSocket {
+        return new DoorbirdUdpSocket(port, this.options.username, this.options.password);
     }
 
     private requestConfig(json?: any): AxiosRequestConfig { // eslint-disable-line @typescript-eslint/no-explicit-any
