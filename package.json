@@ -10,7 +10,7 @@
     "build": "rm -rf dist && tsc",
     "clean": "rm -rf node_modules && rm -rf dist",
     "reinstall": "npm run clean && npm install",
-    "rebuild": "npm run clean && npm install && npm run build"
+    "rebuild": "npm run clean && npm install && npm run build && npm run test"
   },
   "repository": {
     "type": "git",
