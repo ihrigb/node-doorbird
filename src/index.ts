@@ -150,6 +150,22 @@ export class DoorbirdUdpSocket {
     this.server.on("message", this.onMessage);
   }
 
+  private strech = async (salt: Buffer, opslimit: Buffer, memlimit: Buffer) => {
+    await _sodium.ready;
+    const sodium = _sodium;
+    const streched = Buffer.from(
+      sodium.crypto_pwhash(
+        argonKeyLength,
+        this.password.substring(0, 5),
+        salt,
+        opslimit.readInt32BE(),
+        memlimit.readInt32BE(),
+        sodium.crypto_pwhash_ALG_ARGON2I13
+      )
+    );
+    return streched;
+  };
+
   private onMessage(msg: Buffer) {
     const identifier = msg.slice(0, 3);
     const version = msg.slice(3, 4);
@@ -167,23 +183,7 @@ export class DoorbirdUdpSocket {
       return;
     }
 
-    const strech = async () => {
-      await _sodium.ready;
-      const sodium = _sodium;
-      const streched = Buffer.from(
-        sodium.crypto_pwhash(
-          argonKeyLength,
-          this.password.substring(0, 5),
-          salt,
-          opslimit.readInt32BE(),
-          memlimit.readInt32BE(),
-          sodium.crypto_pwhash_ALG_ARGON2I13
-        )
-      );
-      return streched;
-    };
-
-    strech().then((streched) => {
+    this.strech(salt, opslimit, memlimit).then((streched) => {
       const decipher = chacha.AeadLegacy(streched, nonce, true);
       const result = decipher.update(ciphertext);
 
