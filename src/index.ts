@@ -166,7 +166,7 @@ export class DoorbirdUdpSocket {
     return streched;
   };
 
-  private onMessage(msg: Buffer) {
+  private onMessage = async (msg: Buffer) => {
     const identifier = msg.slice(0, 3);
     const version = msg.slice(3, 4);
     const opslimit = msg.slice(4, 8);
@@ -215,7 +215,7 @@ export class DoorbirdUdpSocket {
         );
       }
     });
-  }
+  };
 
   registerRingListener(listener: RingCallback): void {
     this.ringListeners.push(listener);
