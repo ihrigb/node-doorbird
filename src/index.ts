@@ -1,4 +1,4 @@
-import * as _sodium from "libsodium-wrappers";
+import libsodium from "libsodium-wrappers";
 import * as chacha from "chacha-js";
 import * as dgram from "dgram";
 import axios, { AxiosRequestConfig } from "axios";
@@ -151,8 +151,8 @@ export class DoorbirdUdpSocket {
   }
 
   private strech = async (salt: Buffer, opslimit: Buffer, memlimit: Buffer) => {
-    await _sodium.ready;
-    const sodium = _sodium;
+    await libsodium.ready;
+    const sodium = libsodium;
     const streched = Buffer.from(
       sodium.crypto_pwhash(
         argonKeyLength,

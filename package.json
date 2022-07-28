@@ -39,8 +39,8 @@
     "typescript": "^4.5.3"
   },
   "dependencies": {
-    "axios": "^0.24.0",
+    "axios": "^0.27.2",
     "chacha-js": "^2.1.1",
-    "libsodium-wrappers": "^0.7.9"
+    "libsodium-wrappers": "^0.7.10"
   }
 }
