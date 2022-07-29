@@ -99,6 +99,7 @@
   },
   "exclude": [
     "tests/**",
-    "dist/**/*"
+    "dist/**/*",
+    "src/decrypt_example.ts"
   ]
 }
