@@ -198,7 +198,9 @@ export class DoorbirdUdpSocket {
       const date = new Date(0);
       date.setUTCSeconds(timestamp.readInt32BE());
 
-      if ("motion" === event.toString("utf-8")) {
+      const trimmedEvent = event.toString("utf-8").trim();
+
+      if ("motion" === trimmedEvent) {
         this.motionListeners.forEach((listener) =>
           listener({
             intercomId: intercomId.toString("utf-8"),
@@ -209,7 +211,7 @@ export class DoorbirdUdpSocket {
         this.ringListeners.forEach((listener) =>
           listener({
             intercomId: intercomId.toString("utf-8"),
-            event: event.toString("utf-8"),
+            event: trimmedEvent,
             timestamp: date,
           })
         );
