@@ -1,3 +1,9 @@
 src/
 tests/
 .github/
+
+.eslintignore
+.eslintrc
+jest.config.js
+tsconfig.json
+tslint.json
