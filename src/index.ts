@@ -135,13 +135,16 @@ export type MotionCallback = (event: MotionEvent) => void;
 export class DoorbirdUdpSocket {
   private username: string;
   private password: string;
+  private suppressBurst: boolean;
   private server: dgram.Socket;
+  private lastEventTimestamp = 0;
   private ringListeners: RingCallback[] = [];
   private motionListeners: MotionCallback[] = [];
 
-  constructor(port: 6524 | 35344, username: string, password: string) {
+  constructor(port: 6524 | 35344, username: string, password: string, suppressBurst: boolean = false) {
     this.username = username;
     this.password = password;
+    this.suppressBurst = suppressBurst;
     this.server = dgram.createSocket({
       type: "udp4",
       reuseAddr: true,
@@ -167,6 +170,14 @@ export class DoorbirdUdpSocket {
   };
 
   private onMessage = async (msg: Buffer) => {
+    if (this.suppressBurst) {
+      const eventTimestamp = new Date().valueOf();
+      if ((eventTimestamp - this.lastEventTimestamp) < 1000) {
+        return;
+      }
+      this.lastEventTimestamp = eventTimestamp;
+    }
+
     const identifier = msg.slice(0, 3);
     const version = msg.slice(3, 4);
     const opslimit = msg.slice(4, 8);
