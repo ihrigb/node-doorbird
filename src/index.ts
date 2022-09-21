@@ -3,10 +3,6 @@ import * as chacha from "chacha-js";
 import * as dgram from "dgram";
 import axios, { AxiosRequestConfig } from "axios";
 
-type EmtpyCallback = () => void;
-type ErrorCallback = (err: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
-type SuccessCallback<Type> = (obj: Type) => void;
-
 const udpIdentifier = Buffer.from([0xde, 0xad, 0xbe]);
 const argonKeyLength = 32;
 
@@ -141,7 +137,12 @@ export class DoorbirdUdpSocket {
   private ringListeners: RingCallback[] = [];
   private motionListeners: MotionCallback[] = [];
 
-  constructor(port: 6524 | 35344, username: string, password: string, suppressBurst: boolean = false) {
+  constructor(
+    port: 6524 | 35344,
+    username: string,
+    password: string,
+    suppressBurst: boolean = false
+  ) {
     this.username = username;
     this.password = password;
     this.suppressBurst = suppressBurst;
@@ -172,7 +173,7 @@ export class DoorbirdUdpSocket {
   private onMessage = async (msg: Buffer) => {
     if (this.suppressBurst) {
       const eventTimestamp = new Date().valueOf();
-      if ((eventTimestamp - this.lastEventTimestamp) < 1000) {
+      if (eventTimestamp - this.lastEventTimestamp < 1000) {
         return;
       }
       this.lastEventTimestamp = eventTimestamp;
@@ -252,310 +253,168 @@ export default class Doorbird {
     this.options = options;
   }
 
-  initializeSession(
-    successCallback: SuccessCallback<Response<SessionBHA>>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/getsession.cgi`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async initializeSession(): Promise<Response<SessionBHA>> {
+    const resp = await axios.get<Response<SessionBHA>>(
+      this.uri(`/bha-api/getsession.cgi`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  destroySession(
-    session: Response<SessionBHA> | string,
-    successCallback: SuccessCallback<Response<SessionBHA>>,
-    errCallback: ErrorCallback
-  ): void {
+  async destroySession(
+    session: Response<SessionBHA> | string
+  ): Promise<Response<SessionBHA>> {
     if ("object" === typeof session) {
       session = session.BHA.SESSIONID;
     }
-    axios
-      .get(
-        this.uri(`/bha-api/getsession.cgi?invalidate=${session}`),
-        this.requestConfig()
-      )
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+    const resp = await axios.get<Response<SessionBHA>>(
+      this.uri(`/bha-api/getsession.cgi?invalidate=${session}`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  getInfo(
-    successCallback: SuccessCallback<Response<DoorbirdInfoBHA>>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/info.cgi`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async getInfo(): Promise<Response<DoorbirdInfoBHA>> {
+    const resp = await axios.get<Response<DoorbirdInfoBHA>>(
+      this.uri(`/bha-api/info.cgi`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  openDoor(
-    relay: string,
-    successCallback: SuccessCallback<Response<BaseBHA>>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/open-door.cgi?r=${relay}`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async openDoor(relay: string): Promise<Response<BaseBHA>> {
+    const resp = await axios.get<Response<BaseBHA>>(
+      this.uri(`/bha-api/open-door.cgi?r=${relay}`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  lightOn(
-    successCallback: SuccessCallback<Response<BaseBHA>>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/light-on.cgi`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async lightOn(): Promise<Response<BaseBHA>> {
+    const resp = await axios.get<Response<BaseBHA>>(
+      this.uri(`/bha-api/light-on.cgi`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  listFavorites(
-    successCallback: SuccessCallback<Favorites>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/favorites.cgi`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async listFavorites(): Promise<Favorites> {
+    const resp = await axios.get<Favorites>(
+      this.uri(`/bha-api/favorites.cgi`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
   createFavorite(
     type: FavoriteType,
-    favoriteInfo: FavoriteInfo,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    this.doCreateUpdateFavorite(
-      type,
-      favoriteInfo,
-      successCallback,
-      errCallback
-    );
+    favoriteInfo: FavoriteInfo
+  ): Promise<void> {
+    return this.doCreateUpdateFavorite(type, favoriteInfo);
   }
 
   updateFavorite(
     id: string,
     type: FavoriteType,
-    favoriteInfo: FavoriteInfo,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    this.doCreateUpdateFavorite(
-      type,
-      favoriteInfo,
-      successCallback,
-      errCallback,
-      id
-    );
+    favoriteInfo: FavoriteInfo
+  ): Promise<void> {
+    return this.doCreateUpdateFavorite(type, favoriteInfo, id);
   }
 
-  private doCreateUpdateFavorite(
+  private async doCreateUpdateFavorite(
     type: FavoriteType,
     favoriteInfo: FavoriteInfo,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback,
     id?: string
-  ): void {
+  ): Promise<void> {
     let url = `/bha-api/favorites.cgi?action=save&type=${type}&title=&${encodeURIComponent(
       favoriteInfo.title
     )}&value=${encodeURIComponent(favoriteInfo.value)}`;
     if (id) {
       url += `&id=${id}`;
     }
-    axios
-      .get(this.uri(url), this.requestConfig())
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+    const resp = await axios.get<void>(this.uri(url), this.requestConfig());
+    return resp.data;
   }
 
-  deleteFavorite(
-    id: string,
-    type: FavoriteType,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(
-        this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`),
-        this.requestConfig()
-      )
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async deleteFavorite(id: string, type: FavoriteType): Promise<void> {
+    const resp = await axios.get<void>(
+      this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  getSchedule(
-    successCallback: SuccessCallback<Schedule>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/schedule.cgi`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async getSchedule(): Promise<Schedule> {
+    const resp = await axios.get<Schedule>(
+      this.uri(`/bha-api/schedule.cgi`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  createScheduleEntry(
-    scheduleEntry: ScheduleEntry,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    this.updateScheduleEntry(scheduleEntry, successCallback, errCallback);
+  createScheduleEntry(scheduleEntry: ScheduleEntry): Promise<void> {
+    return this.updateScheduleEntry(scheduleEntry);
   }
 
-  updateScheduleEntry(
-    scheduleEntry: ScheduleEntry,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .post(
-        this.uri(`/bha-api/schedule.cgi`),
-        this.requestConfig(scheduleEntry)
-      )
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async updateScheduleEntry(scheduleEntry: ScheduleEntry): Promise<void> {
+    const resp = await axios.post<void>(
+      this.uri(`/bha-api/schedule.cgi`),
+      this.requestConfig(scheduleEntry)
+    );
+    return resp.data;
   }
 
-  deleteScheduleEntry(
+  async deleteScheduleEntry(
     input: "doorbell" | "motion" | "rfid",
-    param: string | null,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
+    param: string | null
+  ): Promise<void> {
     let url = `/bha-api/schedule.cgi?action=remove&input=${input}`;
     if (param) {
       url += `&param=${param}`;
     }
-    axios
-      .get(this.uri(url), this.requestConfig())
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+    const resp = await axios.get<void>(this.uri(url), this.requestConfig());
+    return resp.data;
   }
 
-  restart(successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-    axios
-      .get(this.uri(`/bha-api/restart.cgi`), this.requestConfig())
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async restart(): Promise<void> {
+    const resp = await axios.get<void>(
+      this.uri(`/bha-api/restart.cgi`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  sipRegistration(
+  async sipRegistration(
     user: string,
     password: string,
-    url: string,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(
-        this.uri(
-          `/bha-api/sip.cgi?action=registration&user=${user}&password=${password}&url=${url}`
-        ),
-        this.requestConfig()
-      )
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+    url: string
+  ): Promise<void> {
+    const resp = await axios.get<void>(
+      this.uri(
+        `/bha-api/sip.cgi?action=registration&user=${user}&password=${password}&url=${url}`
+      ),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  sipCall(
-    url: string,
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(
-        this.uri(`/bha-api/sip.cgi?action=makecall&url=${url}`),
-        this.requestConfig()
-      )
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async sipCall(url: string): Promise<void> {
+    const resp = await axios.get<void>(
+      this.uri(`/bha-api/sip.cgi?action=makecall&url=${url}`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  sipHangup(successCallback: EmtpyCallback, errCallback: ErrorCallback): void {
-    axios
-      .get(this.uri(`/bha-api/sip.cgi?action=hangup`), this.requestConfig())
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async sipHangup(): Promise<void> {
+    const resp = await axios.get<void>(
+      this.uri(`/bha-api/sip.cgi?action=hangup`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  sipSettings(
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback,
+  async sipSettings(
     enable: 0 | 1,
     mic_volume: number,
     spk_volume: number,
@@ -564,7 +423,7 @@ export default class Doorbird {
     incoming_call_enable: 0 | 1,
     incoming_call_user: string,
     anc: 0 | 1
-  ): void {
+  ): Promise<void> {
     let url = `/bha-api/sip.cgi?action=settings`;
     if (enable) {
       url += `&enable=${enable}`;
@@ -590,45 +449,24 @@ export default class Doorbird {
     if (anc) {
       url += `&anc=${anc}`;
     }
-    axios
-      .get(this.uri(url), this.requestConfig())
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+    const resp = await axios.get<void>(this.uri(url), this.requestConfig());
+    return resp.data;
   }
 
-  sipStatus(
-    successCallback: SuccessCallback<Response<SipStatusBHA>>,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/sip.cgi?action=status`), this.requestConfig())
-      .then((response) => {
-        successCallback(response.data);
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async sipStatus(): Promise<Response<SipStatusBHA>> {
+    const resp = await axios.get<Response<SipStatusBHA>>(
+      this.uri(`/bha-api/sip.cgi?action=status`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
-  sipSettingsReset(
-    successCallback: EmtpyCallback,
-    errCallback: ErrorCallback
-  ): void {
-    axios
-      .get(this.uri(`/bha-api/sip.cgi?action=reset`), this.requestConfig())
-      .then(() => {
-        successCallback();
-      })
-      .catch((err) => {
-        errCallback(err);
-        return;
-      });
+  async sipSettingsReset(): Promise<void> {
+    const resp = await axios.get<void>(
+      this.uri(`/bha-api/sip.cgi?action=reset`),
+      this.requestConfig()
+    );
+    return resp.data;
   }
 
   startUdpSocket(port: 6524 | 35344): DoorbirdUdpSocket {
