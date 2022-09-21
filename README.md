@@ -23,7 +23,7 @@ In order to use Doorbird's HTTP API, you need a user with privileges to use the 
 ```typescript
 let doorbird = new Doorbird({
     scheme: Scheme.http, // or https
-    host: '<Doorbid IP Adress>',
+    host: '<Doorbid IP Address>',
     username: '<Doorbird Username>',
     password: '<Doorbird Password>'
 });
@@ -117,7 +117,7 @@ doorbird.createFavorite("favoriteId", FavoriteType.http, () => {
 ```typescript
 // get schedule
 doorbird.getSchedule(response => {
-    console.log("SChedule:", response);
+    console.log("Schedule:", response);
 }, err => {
     console.log(err);
 });
