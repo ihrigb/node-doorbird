@@ -35,16 +35,16 @@ let doorbird = new Doorbird({
 
 ```typescript
 // initialize a session
-doorbird.initializeSession(response => {
+doorbird.initializeSession().then(response => {
     let sessionId = response.SESSIONID;
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
 // destroy a session
-doorbird.destroySession(sessionId, response => {
+doorbird.destroySession().then(response => {
     console.log("Session destroyed.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 ```
@@ -53,30 +53,30 @@ doorbird.destroySession(sessionId, response => {
 
 ```typescript
 // get station info
-doorbird.getInfo(response => {
+doorbird.getInfo().then(response => {
     console.log(response.VERSION["DEVICE-TYPE"]);
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
 // open door (switch relay)
-doorbird.openDoor("1", response => {
+doorbird.openDoor("1").then(response => {
     console.log("Door open.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
 // lights on (nightvision)
-doorbird.lightOn(response => {
+doorbird.lightOn().then(response => {
     console.log("Lights switched on.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
 // restart device
-doorbird.restart(() => {
+doorbird.restart().then(() => {
     console.log("Doorbird device restarted.");
-}, err => {
+}.catch(err => {
     console.log(err);
 });
 ```
@@ -88,9 +88,9 @@ doorbird.restart(() => {
 doorbird.createFavorite(FavoriteType.http, {
     title: 'My Favorite',
     value: 'http://anyIp/doorbird'
-}, () => {
+}).then(() => {
     console.log("Favorite created.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
@@ -98,16 +98,16 @@ doorbird.createFavorite(FavoriteType.http, {
 doorbird.createFavorite("favoriteId", FavoriteType.http, {
     title: 'My Favorite',
     value: 'http://anyChangedIp/doorbird'
-}, () => {
+}).then(() => {
     console.log("Favorite updated.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
 // delete favorite
-doorbird.createFavorite("favoriteId", FavoriteType.http, () => {
+doorbird.createFavorite("favoriteId", FavoriteType.http).then(() => {
     console.log("Favorite deleted.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 ```
@@ -116,9 +116,9 @@ doorbird.createFavorite("favoriteId", FavoriteType.http, () => {
 
 ```typescript
 // get schedule
-doorbird.getSchedule(response => {
+doorbird.getSchedule().then(response => {
     console.log("Schedule:", response);
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
@@ -130,9 +130,9 @@ doorbird.createScheduleEntry({
         param: 'My Favorite',
         schedule: 'once'
     }
-}, () => {
+}).then(() => {
     console.log("Schedule entry created.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
@@ -144,16 +144,16 @@ doorbird.updateScheduleEntry({
         param: 'My Favorite',
         schedule: 'once'
     }
-}, () => {
+}).then(() => {
     console.log("Schedule entry updated.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 
 // delete schedule entry
-doorbird.deleteScheduleEntry("doorbell", "My Favorite", () => {
+doorbird.deleteScheduleEntry("doorbell", "My Favorite").then(() => {
     console.log("Schedule entry deleted.");
-}, err => {
+}).catch(err => {
     console.log(err);
 });
 ```
