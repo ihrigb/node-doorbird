@@ -141,7 +141,7 @@ export class DoorbirdUdpSocket {
     port: 6524 | 35344,
     username: string,
     password: string,
-    suppressBurst: boolean = false
+    suppressBurst = false
   ) {
     this.username = username;
     this.password = password;
