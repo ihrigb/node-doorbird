@@ -1,5 +1,8 @@
 # node-doorbird
 
+[![](https://img.shields.io/npm/v/doorbird.svg)](https://www.npmjs.com/package/doorbird)
+[![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/ihrigb/node-doorbird/blob/master/LICENSE)
+
 This is a NodeJS library to interact with Doorbird Door Stations, based on their API.
 
 ## Disclaimer

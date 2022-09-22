@@ -21,7 +21,7 @@
     "doorbird"
   ],
   "author": "ihrigb",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/ihrigb/node-doorbird/issues"
   },
