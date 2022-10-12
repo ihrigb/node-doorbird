@@ -485,6 +485,13 @@ export default class Doorbird {
     );
   }
 
+  async getImage(): Promise<Buffer> {
+    const resp = await axios.get(this.getImageUrl(), {
+      responseType: 'arraybuffer'
+    });
+    return Buffer.from(resp.data, 'binary');
+  }
+
   getVideoUrl(): string {
     return (
       `${this.options.scheme}://${this.options.host}/bha-api/video.cgi` +
