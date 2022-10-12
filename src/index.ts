@@ -469,11 +469,12 @@ export default class Doorbird {
     return resp.data;
   }
 
-  startUdpSocket(port: 6524 | 35344): DoorbirdUdpSocket {
+  startUdpSocket(port: 6524 | 35344, suppressBurst = false): DoorbirdUdpSocket {
     return new DoorbirdUdpSocket(
       port,
       this.options.username,
-      this.options.password
+      this.options.password,
+      suppressBurst
     );
   }
 
