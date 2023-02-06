@@ -500,7 +500,7 @@ export default class Doorbird {
     );
   }
 
-  // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private requestConfig(json?: any): AxiosRequestConfig {
     const requestConfig: AxiosRequestConfig = {
       headers: {

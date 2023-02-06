@@ -29,16 +29,16 @@ const doorbirdOptions: DoorbirdOptions = {
   password: password,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockResponse = (payload?: any, statusCode = 200) => {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
   return {
     status: statusCode,
     data: payload,
   };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const requestConfigParam = (data?: any): AxiosRequestConfig => {
-  // eslint-disable-line @typescript-eslint/no-explicit-any
   const requestConfig: AxiosRequestConfig = {
     headers: {
       Authorization: authHeader,
