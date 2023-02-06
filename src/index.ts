@@ -171,13 +171,6 @@ export class DoorbirdUdpSocket {
   };
 
   private onMessage = async (msg: Buffer) => {
-    if (this.suppressBurst) {
-      const eventTimestamp = new Date().valueOf();
-      if (eventTimestamp - this.lastEventTimestamp < 1000) {
-        return;
-      }
-      this.lastEventTimestamp = eventTimestamp;
-    }
 
     const identifier = msg.slice(0, 3);
     const version = msg.slice(3, 4);
@@ -193,6 +186,14 @@ export class DoorbirdUdpSocket {
 
     if (version[0] !== 0x01) {
       return;
+    }
+
+    if (this.suppressBurst) {
+      const eventTimestamp = new Date().valueOf();
+      if ((eventTimestamp - this.lastEventTimestamp) < 1000) {
+        return;
+      }
+      this.lastEventTimestamp = eventTimestamp;
     }
 
     this.strech(salt, opslimit, memlimit).then((streched) => {
