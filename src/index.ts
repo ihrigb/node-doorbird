@@ -1,6 +1,7 @@
 import libsodium from "libsodium-wrappers";
 import * as chacha from "chacha-js";
 import * as dgram from "dgram";
+import * as https from "https";
 import axios, { AxiosRequestConfig } from "axios";
 
 const udpIdentifier = Buffer.from([0xde, 0xad, 0xbe]);
@@ -517,6 +518,14 @@ export default class Doorbird {
         Authorization: this.authHeader(),
       },
     };
+
+    if (Scheme.https === this.options.scheme) {
+      const httpsAgent = new https.Agent({
+        rejectUnauthorized: false
+      });
+      requestConfig.httpsAgent = httpsAgent;
+    }
+
     if (json !== undefined) {
       requestConfig.data = json;
     }
