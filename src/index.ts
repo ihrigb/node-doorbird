@@ -500,8 +500,7 @@ export default class Doorbird {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private requestConfig(json?: any): AxiosRequestConfig {
+  private requestConfig<T>(json?: T): AxiosRequestConfig<T> {
     const requestConfig: AxiosRequestConfig = {
       headers: {
         Authorization: this.authHeader(),
