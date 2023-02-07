@@ -283,7 +283,18 @@ export default class Doorbird {
     return resp.data;
   }
 
+  /**
+   * Opens a door via a relay of your doorbird system.
+   *
+   * @deprecated use toggleRelay instead
+   * @param relay the relay that opens the door
+   * @returns http response of the call
+   */
   async openDoor(relay: string): Promise<Response<BaseBHA>> {
+    return this.toggleRelay(relay);
+  }
+
+  async toggleRelay(relay: string): Promise<Response<BaseBHA>> {
     const resp = await axios.get<Response<BaseBHA>>(
       this.uri(`/bha-api/open-door.cgi?r=${relay}`),
       this.requestConfig()
