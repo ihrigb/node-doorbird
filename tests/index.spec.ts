@@ -226,7 +226,7 @@ describe("Doorbird Client", () => {
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
-            "/bha-api/favorites.cgi?action=save&type=http&title=&Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi"
+            "/bha-api/favorites.cgi?action=save&type=http&title=Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi"
           ),
           requestConfigParam()
         );
@@ -247,7 +247,7 @@ describe("Doorbird Client", () => {
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
-            "/bha-api/favorites.cgi?action=save&type=http&title=&Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi&id=Fav0"
+            "/bha-api/favorites.cgi?action=save&type=http&title=Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi&id=Fav0"
           ),
           requestConfigParam()
         );
