@@ -501,7 +501,7 @@ export default class Doorbird {
     favoriteInfo: FavoriteInfo,
     id?: string
   ): Promise<void> {
-    let url = `/bha-api/favorites.cgi?action=save&type=${type}&title=&${encodeURIComponent(
+    let url = `/bha-api/favorites.cgi?action=save&type=${type}&title=${encodeURIComponent(
       favoriteInfo.title
     )}&value=${encodeURIComponent(favoriteInfo.value)}`;
     if (id) {
