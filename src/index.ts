@@ -1,4 +1,4 @@
-import libsodium from "libsodium-wrappers";
+import libsodium from "libsodium-wrappers-sumo";
 import * as chacha from "chacha-js";
 import * as dgram from "dgram";
 import * as https from "https";
