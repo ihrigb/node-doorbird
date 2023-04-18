@@ -28,7 +28,7 @@
   "homepage": "https://github.com/ihrigb/node-doorbird#readme",
   "devDependencies": {
     "@types/jest": "^27.0.3",
-    "@types/libsodium-wrappers": "^0.7.9",
+    "@types/libsodium-wrappers-sumo": "^0.7.5",
     "@typescript-eslint/eslint-plugin": "^5.46.1",
     "@typescript-eslint/parser": "^5.47.0",
     "eslint": "^8.29.0",
