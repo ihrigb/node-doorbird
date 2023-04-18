@@ -28,11 +28,10 @@ let doorbird = new Doorbird({
     scheme: Scheme.http, // or https
     host: '<Doorbid IP Address>',
     username: '<Doorbird Username>',
-    password: '<Doorbird Password>'
+    password: '<Doorbird Password>',
+    certificate: '<certificate in pem format>' // can be omitted and is then loaded from the host
 });
 ```
-
-> HTTPS is not yet supported, as certificates are self-signed.
 
 ### Session Management
 
@@ -165,14 +164,17 @@ doorbird.deleteScheduleEntry("doorbell", "My Favorite").then(() => {
 
 > To be documented. (Already available in the library)
 
-### Image and Video URLs
+### Image, Audio and Video URLs
 
 ```typescript
 // get image url
 let imageUrl = doorbird.getImageUrl();
 
+// get audio url
+let audioUrl = doorbird.getAudioUrl(sessionId)
+
 // get video url
-let videoUrl = doorbird.getVideoUrl();
+let videoUrl = doorbird.getVideoUrl(sessionId);
 ```
 
 ### dgram UDP Socket for Ring and Motion Events
@@ -197,3 +199,9 @@ doorbirdUdpSocket.registerMotionListener(motionEvent => {
 // close dgram UDP socket
 doorbirdUdpSocket.close();
 ```
+
+## Doorbird API
+
+Revision: 0.32
+Date: December 21st 2022
+https://www.doorbird.com/downloads/api_lan.pdf?rev=0.32

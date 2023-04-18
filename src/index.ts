@@ -1,8 +1,8 @@
 import axios, { AxiosInstance, CreateAxiosDefaults } from "axios";
-import libsodium from "libsodium-wrappers-sumo";
 import * as chacha from "chacha-js";
 import * as dgram from "dgram";
 import * as https from "https";
+import libsodium from "libsodium-wrappers-sumo";
 import * as tls from "tls";
 
 // Helper to define integer ranges as parameters
@@ -78,7 +78,8 @@ export interface DoorbirdOptions {
    */
   password: string;
   /**
-   * Provide the Doorstation's TLS certificate to avoid general acceptance of self-signed certificates.
+   * Provide the Doorstation's TLS certificate to avoid general acceptance of self-signed certificates. If you do not
+   * provide a certificate, but specifiy 'https' as scheme, the certificate will be loaded from the configured host.
    */
   certificate?: string;
 }
@@ -810,20 +811,39 @@ export default class Doorbird {
   }
 
   /**
+   * Get the Doorbird live audio url.
+   *
+   * @param session session object or id
+   *
+   * @returns audio url
+   */
+  getAudioUrl(session: SessionBHA | string): string {
+    if ("object" === typeof session) {
+      session = session.SESSIONID;
+    }
+
+    // Audio stream does not support https.
+    return (
+      `http://${this.options.host}/bha-api/audio-receive.cgi` +
+      `?sessionid=${session}`
+    );
+  }
+
+  /**
    * Get the Doorbird video url.
+   *
+   * @param session session object or id
    *
    * @returns video url
    */
   getVideoUrl(session: SessionBHA | string): string {
-
     if ("object" === typeof session) {
       session = session.SESSIONID;
     }
 
     // Video stream does not support https.
     return (
-      `http://${this.options.host}/bha-api/video.cgi`
-        + `?sessionid=${session}`
+      `http://${this.options.host}/bha-api/video.cgi` + `?sessionid=${session}`
     );
   }
 
