@@ -817,7 +817,15 @@ export default class Doorbird {
    *
    * @returns audio url
    */
-  getAudioUrl(session: SessionBHA | string): string {
+  getAudioUrl(session?: SessionBHA | string): string {
+    if (!session) {
+      // Audio stream does not support https.
+      return (
+        `http://${this.options.host}/bha-api/audio-receive.cgi` +
+        `?http-user=${this.options.username}&http-password=${this.options.password}`
+      );
+    }
+
     if ("object" === typeof session) {
       session = session.SESSIONID;
     }
@@ -836,7 +844,15 @@ export default class Doorbird {
    *
    * @returns video url
    */
-  getVideoUrl(session: SessionBHA | string): string {
+  getVideoUrl(session?: SessionBHA | string): string {
+    if (!session) {
+      // Audio stream does not support https.
+      return (
+        `http://${this.options.host}/bha-api/audio-receive.cgi` +
+        `?http-user=${this.options.username}&http-password=${this.options.password}`
+      );
+    }
+
     if ("object" === typeof session) {
       session = session.SESSIONID;
     }
