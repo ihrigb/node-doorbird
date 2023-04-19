@@ -46,7 +46,7 @@ export interface DoorbirdOptions {
 /**
  * Generic response wrapper of the Doorbird API.
  */
-export interface Response<Type> {
+export interface Response<Type extends BaseBHA> {
   BHA: Type;
 }
 
@@ -67,7 +67,7 @@ export interface SessionBHA extends BaseBHA {
 /**
  * Specific BHA object for info responses.
  */
-export interface DoorbirdInfoBHA {
+export interface DoorbirdInfoBHA extends BaseBHA {
   VERSION: DoorbirdInfoBHAVersion[];
 }
 
