@@ -813,16 +813,18 @@ export default class Doorbird {
   /**
    * Get the Doorbird live audio url.
    *
+   * ATTENTION: if you do not provide a session id or object, the URL will contain sensitive credentials.
+   *
    * @param session session object or id
    *
    * @returns audio url
    */
   getAudioUrl(session?: SessionBHA | string): string {
+    let baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
     if (!session) {
       // Audio stream does not support https.
       return (
-        `http://${this.options.host}/bha-api/audio-receive.cgi` +
-        `?http-user=${this.options.username}&http-password=${this.options.password}`
+        `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`
       );
     }
 
@@ -832,24 +834,25 @@ export default class Doorbird {
 
     // Audio stream does not support https.
     return (
-      `http://${this.options.host}/bha-api/audio-receive.cgi` +
-      `?sessionid=${session}`
+      `${baseUri}?sessionid=${session}`
     );
   }
 
   /**
    * Get the Doorbird video url.
+   * 
+   * ATTENTION: if you do not provide a session id or object, the URL will contain sensitive credentials.
    *
    * @param session session object or id
    *
    * @returns video url
    */
   getVideoUrl(session?: SessionBHA | string): string {
+    let baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
     if (!session) {
       // Audio stream does not support https.
       return (
-        `http://${this.options.host}/bha-api/audio-receive.cgi` +
-        `?http-user=${this.options.username}&http-password=${this.options.password}`
+        `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`
       );
     }
 
@@ -859,7 +862,7 @@ export default class Doorbird {
 
     // Video stream does not support https.
     return (
-      `http://${this.options.host}/bha-api/video.cgi` + `?sessionid=${session}`
+      `${baseUri}?sessionid=${session}`
     );
   }
 
@@ -880,11 +883,7 @@ export default class Doorbird {
         }
         axiosDefaults.httpsAgent = new https.Agent({
           ca: certificate,
-          checkServerIdentity: (_) => {
-            // we cannot check the identity, as the CN of the certifcate will not
-            // match the servername (likely a IP address or a network specific DN)
-            return undefined;
-          },
+          rejectUnauthorized: false
         });
       }
 
