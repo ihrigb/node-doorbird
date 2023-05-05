@@ -883,7 +883,11 @@ export default class Doorbird {
         }
         axiosDefaults.httpsAgent = new https.Agent({
           ca: certificate,
-          rejectUnauthorized: false
+          checkServerIdentity: (_) => {
+            // we cannot check the identity, as the CN of the certifcate will not
+            // match the servername (likely a IP address or a network specific DN)
+            return undefined;
+          },
         });
       }
 
