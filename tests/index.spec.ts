@@ -110,6 +110,7 @@ describe("Doorbird Client", () => {
   test("getInfo", (done) => {
     const data: Response<DoorbirdInfoBHA> = {
       BHA: {
+        RETURNCODE: "1",
         VERSION: [
           {
             "DEVICE-TYPE": "DoorBird D2101FV-EK-RAL7016",

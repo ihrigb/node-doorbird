@@ -87,7 +87,7 @@ export interface DoorbirdOptions {
 /**
  * Generic response wrapper of the Doorbird API.
  */
-export interface Response<Type extends BaseBHA> {
+export interface Response<Type> {
   BHA: Type;
 }
 
