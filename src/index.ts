@@ -1,8 +1,9 @@
-import libsodium from "libsodium-wrappers-sumo";
+import axios, { AxiosInstance, CreateAxiosDefaults } from "axios";
 import * as chacha from "chacha-js";
 import * as dgram from "dgram";
 import * as https from "https";
-import axios, { AxiosRequestConfig } from "axios";
+import libsodium from "libsodium-wrappers-sumo";
+import * as tls from "tls";
 
 // Helper to define integer ranges as parameters
 type Enumerate<
@@ -26,6 +27,29 @@ const udpIdentifier = Buffer.from([0xde, 0xad, 0xbe]);
 const argonKeyLength = 32;
 
 /**
+ * Utility method to retrieve the Doorstation's self signed certificate in PEM representation.
+ * @param host host to retrieve the certificate for
+ */
+export async function getDoorstationCertificate(host: string): Promise<string> {
+  const prom = new Promise<string>((resolve) => {
+    var socket = tls.connect(
+      {
+        host: host,
+        port: 443,
+        rejectUnauthorized: false,
+      },
+      () => {
+        let peerCert = socket.getPeerCertificate().raw.toString("base64");
+        resolve(
+          `-----BEGIN CERTIFICATE-----\n${peerCert}\n-----END CERTIFICATE-----`
+        );
+      }
+    );
+  });
+  return await prom;
+}
+
+/**
  * Scheme for API communication with the door station.
  */
 export enum Scheme {
@@ -37,16 +61,33 @@ export enum Scheme {
  * Options to initialize the Doorbird client.
  */
 export interface DoorbirdOptions {
+  /**
+   * Scheme to connect to the Doorbid Door Station.
+   */
   scheme: Scheme;
+  /**
+   * Host / IP of the Door Station.
+   */
   host: string;
+  /**
+   * Username to access the API.
+   */
   username: string;
+  /**
+   * Password to access the API.
+   */
   password: string;
+  /**
+   * Provide the Doorstation's TLS certificate to avoid general acceptance of self-signed certificates. If you do not
+   * provide a certificate, but specifiy 'https' as scheme, the certificate will be loaded from the configured host.
+   */
+  certificate?: string;
 }
 
 /**
  * Generic response wrapper of the Doorbird API.
  */
-export interface Response<Type> {
+export interface Response<Type extends BaseBHA> {
   BHA: Type;
 }
 
@@ -67,7 +108,7 @@ export interface SessionBHA extends BaseBHA {
 /**
  * Specific BHA object for info responses.
  */
-export interface DoorbirdInfoBHA {
+export interface DoorbirdInfoBHA extends BaseBHA {
   VERSION: DoorbirdInfoBHAVersion[];
 }
 
@@ -360,6 +401,7 @@ export class DoorbirdUdpSocket {
  */
 export default class Doorbird {
   private options: DoorbirdOptions;
+  private http: AxiosInstance | undefined;
 
   /**
    * Construct a Doorbird client.
@@ -376,9 +418,9 @@ export default class Doorbird {
    * @returns session response
    */
   async initializeSession(): Promise<Response<SessionBHA>> {
-    const resp = await axios.get<Response<SessionBHA>>(
-      this.uri(`/bha-api/getsession.cgi`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<Response<SessionBHA>>(
+      this.uri(`/bha-api/getsession.cgi`)
     );
     return resp.data;
   }
@@ -395,9 +437,9 @@ export default class Doorbird {
     if ("object" === typeof session) {
       session = session.BHA.SESSIONID;
     }
-    const resp = await axios.get<Response<SessionBHA>>(
-      this.uri(`/bha-api/getsession.cgi?invalidate=${session}`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<Response<SessionBHA>>(
+      this.uri(`/bha-api/getsession.cgi?invalidate=${session}`)
     );
     return resp.data;
   }
@@ -408,9 +450,9 @@ export default class Doorbird {
    * @returns Doorbird info response
    */
   async getInfo(): Promise<Response<DoorbirdInfoBHA>> {
-    const resp = await axios.get<Response<DoorbirdInfoBHA>>(
-      this.uri(`/bha-api/info.cgi`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<Response<DoorbirdInfoBHA>>(
+      this.uri(`/bha-api/info.cgi`)
     );
     return resp.data;
   }
@@ -433,9 +475,9 @@ export default class Doorbird {
    * @returns base response
    */
   async toggleRelay(relay: string): Promise<Response<BaseBHA>> {
-    const resp = await axios.get<Response<BaseBHA>>(
-      this.uri(`/bha-api/open-door.cgi?r=${relay}`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<Response<BaseBHA>>(
+      this.uri(`/bha-api/open-door.cgi?r=${relay}`)
     );
     return resp.data;
   }
@@ -446,9 +488,9 @@ export default class Doorbird {
    * @returns base response
    */
   async lightOn(): Promise<Response<BaseBHA>> {
-    const resp = await axios.get<Response<BaseBHA>>(
-      this.uri(`/bha-api/light-on.cgi`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<Response<BaseBHA>>(
+      this.uri(`/bha-api/light-on.cgi`)
     );
     return resp.data;
   }
@@ -459,10 +501,8 @@ export default class Doorbird {
    * @returns favorites list
    */
   async listFavorites(): Promise<Favorites> {
-    const resp = await axios.get<Favorites>(
-      this.uri(`/bha-api/favorites.cgi`),
-      this.requestConfig()
-    );
+    const http = await this.getHttp();
+    const resp = await http.get<Favorites>(this.uri(`/bha-api/favorites.cgi`));
     return resp.data;
   }
 
@@ -507,7 +547,8 @@ export default class Doorbird {
     if (id) {
       url += `&id=${id}`;
     }
-    const resp = await axios.get<void>(this.uri(url), this.requestConfig());
+    const http = await this.getHttp();
+    const resp = await http.get<void>(this.uri(url));
     return resp.data;
   }
 
@@ -519,9 +560,9 @@ export default class Doorbird {
    * @returns empty promise
    */
   async deleteFavorite(id: string, type: FavoriteType): Promise<void> {
-    const resp = await axios.get<void>(
-      this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<void>(
+      this.uri(`/bha-api/favorites.cgi?action=remove&type=${type}&id=${id}`)
     );
     return resp.data;
   }
@@ -532,10 +573,8 @@ export default class Doorbird {
    * @returns schedule response
    */
   async getSchedule(): Promise<Schedule> {
-    const resp = await axios.get<Schedule>(
-      this.uri(`/bha-api/schedule.cgi`),
-      this.requestConfig()
-    );
+    const http = await this.getHttp();
+    const resp = await http.get<Schedule>(this.uri(`/bha-api/schedule.cgi`));
     return resp.data;
   }
 
@@ -556,10 +595,10 @@ export default class Doorbird {
    * @returns empty promise
    */
   async updateScheduleEntry(scheduleEntry: ScheduleEntry): Promise<void> {
-    const resp = await axios.post<void>(
-      this.uri(`/bha-api/schedule.cgi`),
-      this.requestConfig(scheduleEntry)
-    );
+    const http = await this.getHttp();
+    const resp = await http.post<void>(this.uri(`/bha-api/schedule.cgi`), {
+      data: scheduleEntry,
+    });
     return resp.data;
   }
 
@@ -578,7 +617,8 @@ export default class Doorbird {
     if (param) {
       url += `&param=${param}`;
     }
-    const resp = await axios.get<void>(this.uri(url), this.requestConfig());
+    const http = await this.getHttp();
+    const resp = await http.get<void>(this.uri(url));
     return resp.data;
   }
 
@@ -588,10 +628,8 @@ export default class Doorbird {
    * @returns empty promise
    */
   async restart(): Promise<void> {
-    const resp = await axios.get<void>(
-      this.uri(`/bha-api/restart.cgi`),
-      this.requestConfig()
-    );
+    const http = await this.getHttp();
+    const resp = await http.get<void>(this.uri(`/bha-api/restart.cgi`));
     return resp.data;
   }
 
@@ -608,11 +646,11 @@ export default class Doorbird {
     password: string,
     url: string
   ): Promise<void> {
-    const resp = await axios.get<void>(
+    const http = await this.getHttp();
+    const resp = await http.get<void>(
       this.uri(
         `/bha-api/sip.cgi?action=registration&user=${user}&password=${password}&url=${url}`
-      ),
-      this.requestConfig()
+      )
     );
     return resp.data;
   }
@@ -624,9 +662,9 @@ export default class Doorbird {
    * @returns empty promise
    */
   async sipCall(url: string): Promise<void> {
-    const resp = await axios.get<void>(
-      this.uri(`/bha-api/sip.cgi?action=makecall&url=${url}`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<void>(
+      this.uri(`/bha-api/sip.cgi?action=makecall&url=${url}`)
     );
     return resp.data;
   }
@@ -637,9 +675,9 @@ export default class Doorbird {
    * @returns empty promise
    */
   async sipHangup(): Promise<void> {
-    const resp = await axios.get<void>(
-      this.uri(`/bha-api/sip.cgi?action=hangup`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<void>(
+      this.uri(`/bha-api/sip.cgi?action=hangup`)
     );
     return resp.data;
   }
@@ -700,7 +738,8 @@ export default class Doorbird {
     if (callTimeLimit) {
       url += `&call_time_limit=${callTimeLimit}`;
     }
-    const resp = await axios.get<void>(this.uri(url), this.requestConfig());
+    const http = await this.getHttp();
+    const resp = await http.get<void>(this.uri(url));
     return resp.data;
   }
 
@@ -710,9 +749,9 @@ export default class Doorbird {
    * @returns Specific BHA for SIP status
    */
   async sipStatus(): Promise<Response<SipStatusBHA>> {
-    const resp = await axios.get<Response<SipStatusBHA>>(
-      this.uri(`/bha-api/sip.cgi?action=status`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<Response<SipStatusBHA>>(
+      this.uri(`/bha-api/sip.cgi?action=status`)
     );
     return resp.data;
   }
@@ -723,9 +762,9 @@ export default class Doorbird {
    * @returns empty promise
    */
   async sipSettingsReset(): Promise<void> {
-    const resp = await axios.get<void>(
-      this.uri(`/bha-api/sip.cgi?action=reset`),
-      this.requestConfig()
+    const http = await this.getHttp();
+    const resp = await http.get<void>(
+      this.uri(`/bha-api/sip.cgi?action=reset`)
     );
     return resp.data;
   }
@@ -764,42 +803,97 @@ export default class Doorbird {
    * @returns buffer with image data
    */
   async getImage(): Promise<Buffer> {
-    const resp = await axios.get(this.getImageUrl(), {
+    const http = await this.getHttp();
+    const resp = await http.get(this.getImageUrl(), {
       responseType: "arraybuffer",
     });
     return Buffer.from(resp.data, "binary");
   }
 
   /**
-   * Get the Doorbird video url.
-   * 
-   * @returns video url
+   * Get the Doorbird live audio url.
+   *
+   * ATTENTION: if you do not provide a session id or object, the URL will contain sensitive credentials.
+   *
+   * @param session session object or id
+   *
+   * @returns audio url
    */
-  getVideoUrl(): string {
+  getAudioUrl(session?: SessionBHA | string): string {
+    let baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
+    if (!session) {
+      // Audio stream does not support https.
+      return (
+        `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`
+      );
+    }
+
+    if ("object" === typeof session) {
+      session = session.SESSIONID;
+    }
+
+    // Audio stream does not support https.
     return (
-      `${this.options.scheme}://${this.options.host}/bha-api/video.cgi` +
-      `?http-user=${this.options.username}&http-password=${this.options.password}`
+      `${baseUri}?sessionid=${session}`
     );
   }
 
-  private requestConfig<T>(json?: T): AxiosRequestConfig<T> {
-    const requestConfig: AxiosRequestConfig = {
-      headers: {
-        Authorization: this.authHeader(),
-      },
-    };
-
-    if (Scheme.https === this.options.scheme) {
-      const httpsAgent = new https.Agent({
-        rejectUnauthorized: false,
-      });
-      requestConfig.httpsAgent = httpsAgent;
+  /**
+   * Get the Doorbird video url.
+   * 
+   * ATTENTION: if you do not provide a session id or object, the URL will contain sensitive credentials.
+   *
+   * @param session session object or id
+   *
+   * @returns video url
+   */
+  getVideoUrl(session?: SessionBHA | string): string {
+    let baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
+    if (!session) {
+      // Audio stream does not support https.
+      return (
+        `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`
+      );
     }
 
-    if (json !== undefined) {
-      requestConfig.data = json;
+    if ("object" === typeof session) {
+      session = session.SESSIONID;
     }
-    return requestConfig;
+
+    // Video stream does not support https.
+    return (
+      `${baseUri}?sessionid=${session}`
+    );
+  }
+
+  private async getHttp(): Promise<AxiosInstance> {
+    if (this.http === undefined) {
+      const axiosDefaults: CreateAxiosDefaults = {
+        headers: {
+          Authorization: this.authHeader(),
+        },
+      };
+
+      if (this.options.scheme === Scheme.https) {
+        let certificate;
+        if (this.options.certificate) {
+          certificate = this.options.certificate;
+        } else {
+          certificate = await getDoorstationCertificate(this.options.host);
+        }
+        axiosDefaults.httpsAgent = new https.Agent({
+          ca: certificate,
+          checkServerIdentity: (_) => {
+            // we cannot check the identity, as the CN of the certifcate will not
+            // match the servername (likely a IP address or a network specific DN)
+            return undefined;
+          },
+        });
+      }
+
+      this.http = axios.create(axiosDefaults);
+    }
+    return this.http;
   }
 
   private uri(path: string): string {
