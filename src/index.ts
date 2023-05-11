@@ -32,14 +32,14 @@ const argonKeyLength = 32;
  */
 export async function getDoorstationCertificate(host: string): Promise<string> {
   const prom = new Promise<string>((resolve) => {
-    var socket = tls.connect(
+    const socket = tls.connect(
       {
         host: host,
         port: 443,
         rejectUnauthorized: false,
       },
       () => {
-        let peerCert = socket.getPeerCertificate().raw.toString("base64");
+        const peerCert = socket.getPeerCertificate().raw.toString("base64");
         resolve(
           `-----BEGIN CERTIFICATE-----\n${peerCert}\n-----END CERTIFICATE-----`
         );
@@ -820,7 +820,7 @@ export default class Doorbird {
    * @returns audio url
    */
   getAudioUrl(session?: SessionBHA | string): string {
-    let baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
+    const baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
     if (!session) {
       // Audio stream does not support https.
       return (
@@ -848,7 +848,7 @@ export default class Doorbird {
    * @returns video url
    */
   getVideoUrl(session?: SessionBHA | string): string {
-    let baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
+    const baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
     if (!session) {
       // Audio stream does not support https.
       return (
@@ -883,7 +883,7 @@ export default class Doorbird {
         }
         axiosDefaults.httpsAgent = new https.Agent({
           ca: certificate,
-          checkServerIdentity: (_) => {
+          checkServerIdentity: () => {
             // we cannot check the identity, as the CN of the certifcate will not
             // match the servername (likely a IP address or a network specific DN)
             return undefined;
