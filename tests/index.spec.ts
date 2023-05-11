@@ -15,12 +15,14 @@ import axios, { AxiosRequestConfig } from "axios";
 
 jest.mock("axios");
 
+beforeAll(() => {
+  (axios as jest.Mocked<typeof axios>).create.mockReturnThis();
+});
+
 const scheme = Scheme.http;
 const host = "127.0.0.1";
 const username = "username";
 const password = "password";
-const authHeader =
-  "Basic " + Buffer.from(`${username}:${password}`).toString("base64");
 
 const doorbirdOptions: DoorbirdOptions = {
   scheme: scheme,
@@ -40,9 +42,6 @@ const mockResponse = (payload?: any, statusCode = 200) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const requestConfigParam = (data?: any): AxiosRequestConfig => {
   const requestConfig: AxiosRequestConfig = {
-    headers: {
-      Authorization: authHeader,
-    },
   };
   if (data !== undefined) {
     requestConfig.data = data;
@@ -72,8 +71,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/getsession.cgi"),
-          requestConfigParam()
+          uriParam("/bha-api/getsession.cgi")
         );
         done();
       })
@@ -97,8 +95,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/getsession.cgi?invalidate=sessionid"),
-          requestConfigParam()
+          uriParam("/bha-api/getsession.cgi?invalidate=sessionid")
         );
         done();
       })
@@ -130,8 +127,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/info.cgi"),
-          requestConfigParam()
+          uriParam("/bha-api/info.cgi")
         );
         done();
       })
@@ -154,8 +150,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/open-door.cgi?r=relay"),
-          requestConfigParam()
+          uriParam("/bha-api/open-door.cgi?r=relay")
         );
         done();
       })
@@ -178,8 +173,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/light-on.cgi"),
-          requestConfigParam()
+          uriParam("/bha-api/light-on.cgi")
         );
         done();
       })
@@ -207,8 +201,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/favorites.cgi"),
-          requestConfigParam()
+          uriParam("/bha-api/favorites.cgi")
         );
         done();
       })
@@ -228,8 +221,7 @@ describe("Doorbird Client", () => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/favorites.cgi?action=save&type=http&title=Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi"
-          ),
-          requestConfigParam()
+          )
         );
         done();
       })
@@ -249,8 +241,7 @@ describe("Doorbird Client", () => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/favorites.cgi?action=save&type=http&title=Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi&id=Fav0"
-          ),
-          requestConfigParam()
+          )
         );
         done();
       })
@@ -265,8 +256,7 @@ describe("Doorbird Client", () => {
       .deleteFavorite("Fav0", FavoriteType.http)
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/favorites.cgi?action=remove&type=http&id=Fav0"),
-          requestConfigParam()
+          uriParam("/bha-api/favorites.cgi?action=remove&type=http&id=Fav0")
         );
         done();
       })
@@ -295,8 +285,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/schedule.cgi"),
-          requestConfigParam()
+          uriParam("/bha-api/schedule.cgi")
         );
         done();
       })
@@ -361,8 +350,7 @@ describe("Doorbird Client", () => {
       .deleteScheduleEntry("doorbell", null)
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/schedule.cgi?action=remove&input=doorbell"),
-          requestConfigParam()
+          uriParam("/bha-api/schedule.cgi?action=remove&input=doorbell")
         );
         done();
       })
@@ -379,8 +367,7 @@ describe("Doorbird Client", () => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/schedule.cgi?action=remove&input=doorbell&param=param0"
-          ),
-          requestConfigParam()
+          )
         );
         done();
       })
@@ -395,8 +382,7 @@ describe("Doorbird Client", () => {
       .restart()
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/restart.cgi"),
-          requestConfigParam()
+          uriParam("/bha-api/restart.cgi")
         );
         done();
       })
@@ -413,8 +399,7 @@ describe("Doorbird Client", () => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/sip.cgi?action=registration&user=user0&password=password0&url=url0"
-          ),
-          requestConfigParam()
+          )
         );
         done();
       })
@@ -429,8 +414,7 @@ describe("Doorbird Client", () => {
       .sipCall("url0")
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/sip.cgi?action=makecall&url=url0"),
-          requestConfigParam()
+          uriParam("/bha-api/sip.cgi?action=makecall&url=url0")
         );
         done();
       })
@@ -445,8 +429,7 @@ describe("Doorbird Client", () => {
       .sipHangup()
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/sip.cgi?action=hangup"),
-          requestConfigParam()
+          uriParam("/bha-api/sip.cgi?action=hangup")
         );
         done();
       })
@@ -463,8 +446,7 @@ describe("Doorbird Client", () => {
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/sip.cgi?action=settings&enable=1&mic_volume=70&spk_volume=60&relay1_passcode=98127&incoming_call_user=user0&anc=1"
-          ),
-          requestConfigParam()
+          )
         );
         done();
       })
@@ -513,8 +495,7 @@ describe("Doorbird Client", () => {
       .then((response) => {
         expect(response).toEqual(data);
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/sip.cgi?action=status"),
-          requestConfigParam()
+          uriParam("/bha-api/sip.cgi?action=status")
         );
         done();
       })
@@ -529,8 +510,7 @@ describe("Doorbird Client", () => {
       .sipSettingsReset()
       .then(() => {
         expect(axios.get).toHaveBeenLastCalledWith(
-          uriParam("/bha-api/sip.cgi?action=reset"),
-          requestConfigParam()
+          uriParam("/bha-api/sip.cgi?action=reset")
         );
         done();
       })
