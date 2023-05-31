@@ -31,7 +31,7 @@ const argonKeyLength = 32;
  * @param host host to retrieve the certificate for
  */
 export async function getDoorstationCertificate(host: string): Promise<string> {
-  const prom = new Promise<string>((resolve) => {
+  return new Promise<string>((resolve) => {
     const socket = tls.connect(
       {
         host: host,
@@ -40,13 +40,13 @@ export async function getDoorstationCertificate(host: string): Promise<string> {
       },
       () => {
         const peerCert = socket.getPeerCertificate().raw.toString("base64");
+        socket.destroy();
         resolve(
           `-----BEGIN CERTIFICATE-----\n${peerCert}\n-----END CERTIFICATE-----`
         );
       }
     );
   });
-  return await prom;
 }
 
 /**
