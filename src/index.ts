@@ -103,6 +103,7 @@ export interface BaseBHA {
  */
 export interface SessionBHA extends BaseBHA {
   SESSIONID: string;
+  NOTIFICATION_ENCRYPTION_KEY: string;
 }
 
 /**
@@ -260,11 +261,13 @@ export type MotionCallback = (event: MotionEvent) => void;
 export class DoorbirdUdpSocket {
   private username: string;
   private password: string;
+  private client: Doorbird;
   private suppressBurst: boolean;
   private server: dgram.Socket;
   private lastEventTimestamp = 0;
   private ringListeners: RingCallback[] = [];
   private motionListeners: MotionCallback[] = [];
+  private notificationEncryptionKey: Buffer | null = null;
 
   /**
    * Construct a new DoorbirdUdpSocket
@@ -272,16 +275,19 @@ export class DoorbirdUdpSocket {
    * @param port Doorbird sends to ports 6524 and 35344.
    * @param username username of the Doorbird user.
    * @param password password of the Doorbird user.
+   * @param client the parent instance of the Doorbird api.
    * @param suppressBurst flag to suppress multiple burst messages (callback is only called once)
    */
   constructor(
     port: 6524 | 35344,
     username: string,
     password: string,
+    client: Doorbird,
     suppressBurst = false
   ) {
     this.username = username;
     this.password = password;
+    this.client = client;
     this.suppressBurst = suppressBurst;
     this.server = dgram.createSocket({
       type: "udp4",
@@ -308,19 +314,10 @@ export class DoorbirdUdpSocket {
   };
 
   private onMessage = async (msg: Buffer) => {
-    const identifier = msg.slice(0, 3);
-    const version = msg.slice(3, 4);
-    const opslimit = msg.slice(4, 8);
-    const memlimit = msg.slice(8, 12);
-    const salt = msg.slice(12, 28);
-    const nonce = msg.slice(28, 36);
-    const ciphertext = msg.slice(36, 70);
+    const identifier = msg.subarray(0, 3);
+    const version = msg.subarray(3, 4);
 
     if (udpIdentifier.toString("base64") !== identifier.toString("base64")) {
-      return;
-    }
-
-    if (version[0] !== 0x01) {
       return;
     }
 
@@ -332,40 +329,74 @@ export class DoorbirdUdpSocket {
       this.lastEventTimestamp = eventTimestamp;
     }
 
-    this.strech(salt, opslimit, memlimit).then((streched) => {
-      const decipher = chacha.AeadLegacy(streched, nonce, true);
-      const result = decipher.update(ciphertext);
+    let decrypted;
+    if (version[0] === 0x01) {
+      decrypted = await this.decryptV1(msg);
+    } else if (version[0] === 0x02) {
+      decrypted = await this.decryptV2(msg);
+    } else {
+      throw new Error("Unsupported version of UDP package.");
+    }
 
-      const intercomId = result.slice(0, 6);
-      const event = result.slice(6, 14);
-      const timestamp = result.slice(14, 18);
+    const intercomId = decrypted.subarray(0, 6);
+    const event = decrypted.subarray(6, 14);
+    const timestamp = decrypted.subarray(14, 18);
 
-      if (this.username.substring(0, 6) !== intercomId.toString("utf-8")) {
-        return;
-      }
+    if (this.username.substring(0, 6) !== intercomId.toString("utf-8")) {
+      return;
+    }
 
-      const date = new Date(0);
-      date.setUTCSeconds(timestamp.readInt32BE());
+    const date = new Date(0);
+    date.setUTCSeconds(timestamp.readInt32BE());
 
-      const trimmedEvent = event.toString("utf-8").trim();
+    const trimmedEvent = event.toString("utf-8").trim();
 
-      if ("motion" === trimmedEvent) {
-        this.motionListeners.forEach((listener) =>
-          listener({
-            intercomId: intercomId.toString("utf-8"),
-            timestamp: date,
-          })
-        );
-      } else {
-        this.ringListeners.forEach((listener) =>
-          listener({
-            intercomId: intercomId.toString("utf-8"),
-            event: trimmedEvent,
-            timestamp: date,
-          })
-        );
-      }
-    });
+    if ("motion" === trimmedEvent) {
+      this.motionListeners.forEach((listener) =>
+        listener({
+          intercomId: intercomId.toString("utf-8"),
+          timestamp: date,
+        })
+      );
+    } else {
+      this.ringListeners.forEach((listener) =>
+        listener({
+          intercomId: intercomId.toString("utf-8"),
+          event: trimmedEvent,
+          timestamp: date,
+        })
+      );
+    }
+  };
+
+  private decryptV1 = async (msg: Buffer) => {
+    const opslimit = msg.subarray(4, 8);
+    const memlimit = msg.subarray(8, 12);
+    const salt = msg.subarray(12, 28);
+    const nonce = msg.subarray(28, 36);
+    const ciphertext = msg.subarray(36, 70);
+
+    const streched = await this.strech(salt, opslimit, memlimit);
+    const decipher = chacha.AeadLegacy(streched, nonce, true);
+    return decipher.update(ciphertext);
+  };
+
+  private decryptV2 = async (msg: Buffer) => {
+    const nonce = msg.subarray(4, 12);
+    const ciphertext = msg.subarray(12, 46);
+
+    const decipher = chacha.AeadLegacy(await this.getNotificationEncryptionKey(), nonce, true);
+    return decipher.update(ciphertext);
+  };
+
+  private getNotificationEncryptionKey = async () => {
+    if (this.notificationEncryptionKey === null) {
+      this.notificationEncryptionKey = Buffer.from(
+        (await this.client.initializeSession()).BHA.NOTIFICATION_ENCRYPTION_KEY,
+        "utf-8"
+      );
+    }
+    return this.notificationEncryptionKey;
   };
 
   /**
@@ -781,6 +812,7 @@ export default class Doorbird {
       port,
       this.options.username,
       this.options.password,
+      this,
       suppressBurst
     );
   }
@@ -823,9 +855,7 @@ export default class Doorbird {
     const baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
     if (!session) {
       // Audio stream does not support https.
-      return (
-        `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`
-      );
+      return `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`;
     }
 
     if ("object" === typeof session) {
@@ -833,14 +863,12 @@ export default class Doorbird {
     }
 
     // Audio stream does not support https.
-    return (
-      `${baseUri}?sessionid=${session}`
-    );
+    return `${baseUri}?sessionid=${session}`;
   }
 
   /**
    * Get the Doorbird video url.
-   * 
+   *
    * ATTENTION: if you do not provide a session id or object, the URL will contain sensitive credentials.
    *
    * @param session session object or id
@@ -851,9 +879,7 @@ export default class Doorbird {
     const baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
     if (!session) {
       // Audio stream does not support https.
-      return (
-        `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`
-      );
+      return `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`;
     }
 
     if ("object" === typeof session) {
@@ -861,9 +887,7 @@ export default class Doorbird {
     }
 
     // Video stream does not support https.
-    return (
-      `${baseUri}?sessionid=${session}`
-    );
+    return `${baseUri}?sessionid=${session}`;
   }
 
   private async getHttp(): Promise<AxiosInstance> {

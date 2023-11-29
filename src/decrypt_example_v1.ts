@@ -1,8 +1,7 @@
-import libsodium from 'libsodium-wrappers';
+import libsodium from 'libsodium-wrappers-sumo';
 import * as chacha from "chacha-js";
 
 const argonKeyLength = 32;
-const username = 'foobar0001';
 const password = 'QzT3jeK3JY';
 
 const strech = async (salt: Buffer, opslimit: Buffer, memlimit: Buffer) => {
@@ -29,13 +28,13 @@ const msg = Buffer.from([
     0xDB, 0x10, 0x78, 0xB9, 0xF6, 0x7B
 ]);
 
-const identifier = msg.slice(0, 3);
-const version = msg.slice(3, 4);
-const opslimit = msg.slice(4, 8);
-const memlimit = msg.slice(8, 12);
-const salt = msg.slice(12, 28);
-const nonce = msg.slice(28, 36);
-const ciphertext = msg.slice(36, 70);
+const identifier = msg.subarray(0, 3);
+const version = msg.subarray(3, 4);
+const opslimit = msg.subarray(4, 8);
+const memlimit = msg.subarray(8, 12);
+const salt = msg.subarray(12, 28);
+const nonce = msg.subarray(28, 36);
+const ciphertext = msg.subarray(36, 70);
 
 console.log("Identifier:", identifier.toString('base64'));
 console.log("Version:", version[0]);
@@ -46,14 +45,14 @@ strech(salt, opslimit, memlimit).then(streched => {
     const decipher = chacha.AeadLegacy(streched, nonce, true);
     const result = decipher.update(ciphertext);
     console.log("Deciphered:", result);
-    
-    const intercomId = result.slice(0, 6);
-    const event = result.slice(6, 14);
-    const timestamp = result.slice(14, 18);
+
+    const intercomId = result.subarray(0, 6);
+    const event = result.subarray(6, 14);
+    const timestamp = result.subarray(14, 18);
 
     console.log("IntercomId:", intercomId.toString("utf-8"));
     console.log("Event:", event.toString("utf-8"));
-    let date = new Date(0);
+    const date = new Date(0);
     date.setUTCSeconds(timestamp.readInt32BE());
     console.log("Timestamp:", date);
 });

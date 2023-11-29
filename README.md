@@ -202,6 +202,6 @@ doorbirdUdpSocket.close();
 
 ## Doorbird API
 
-Revision: 0.33  
-Date: May 25th 2023  
-https://www.doorbird.com/downloads/api_lan.pdf?rev=0.33
+Revision: 0.36
+Date: November 13th 2023
+https://www.doorbird.com/downloads/api_lan.pdf?rev=0.36

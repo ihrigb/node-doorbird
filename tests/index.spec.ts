@@ -61,6 +61,7 @@ describe("Doorbird Client", () => {
       BHA: {
         RETURNCODE: "0",
         SESSIONID: "SessionID",
+        NOTIFICATION_ENCRYPTION_KEY: "NEK"
       },
     };
     (axios.get as unknown as jest.Mock).mockResolvedValueOnce(
@@ -85,6 +86,7 @@ describe("Doorbird Client", () => {
       BHA: {
         RETURNCODE: "0",
         SESSIONID: "SessionID",
+        NOTIFICATION_ENCRYPTION_KEY: "NEK"
       },
     };
     (axios.get as unknown as jest.Mock).mockResolvedValueOnce(
