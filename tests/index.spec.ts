@@ -272,10 +272,12 @@ describe("Doorbird Client", () => {
       BHA: [
         {
           input: "doorbell",
-          output: {
-            event: "relay",
-            schedule: "once",
-          },
+          output: [
+            {
+              event: "relay",
+              schedule: "once",
+            },
+          ]
         },
       ],
     };
@@ -299,10 +301,12 @@ describe("Doorbird Client", () => {
   test("createScheduleEntry", (done) => {
     const data: ScheduleEntry = {
       input: "doorbell",
-      output: {
-        event: "relay",
-        schedule: "once",
-      },
+      output: [
+        {
+          event: "relay",
+          schedule: "once",
+        },
+      ]
     };
     (axios.post as unknown as jest.Mock).mockResolvedValueOnce(
       mockResponse(data)
@@ -324,10 +328,12 @@ describe("Doorbird Client", () => {
   test("updateScheduleEntry", (done) => {
     const data: ScheduleEntry = {
       input: "doorbell",
-      output: {
-        event: "relay",
-        schedule: "once",
-      },
+      output: [
+        {
+          event: "relay",
+          schedule: "once",
+        },
+      ]
     };
     (axios.post as unknown as jest.Mock).mockResolvedValueOnce(
       mockResponse(data)
