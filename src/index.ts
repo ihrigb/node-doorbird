@@ -166,7 +166,7 @@ export type Schedule = ScheduleEntry[];
 export interface ScheduleEntry {
   input: "doorbell" | "motion" | "rfid";
   param?: string;
-  output: ScheduleEntryOutput;
+  output: ScheduleEntryOutput[];
 }
 
 /**
