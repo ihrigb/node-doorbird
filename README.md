@@ -86,6 +86,13 @@ doorbird.restart().then(() => {
 ### Favorite Handling
 
 ```typescript
+// list favorites
+doorbird.listFavorites().then(response => {
+    console.log("Favorites:", response);
+}).catch(err => {
+    console.log(err);
+});
+
 // create favorite
 doorbird.createFavorite(FavoriteType.http, {
     title: 'My Favorite',
