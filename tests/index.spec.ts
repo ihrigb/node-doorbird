@@ -1,17 +1,17 @@
+import axios, { AxiosRequestConfig, RawAxiosResponseHeaders } from "axios";
 import Doorbird, {
-  Response,
-  DoorbirdInfoBHA,
-  Scheme,
-  DoorbirdOptions,
-  SessionBHA,
   BaseBHA,
-  Favorites,
+  DoorbirdInfoBHA,
+  DoorbirdOptions,
   FavoriteType,
+  Favorites,
+  Response,
   Schedule,
   ScheduleEntry,
+  Scheme,
+  SessionBHA,
   SipStatusBHA,
 } from "../src";
-import axios, { AxiosRequestConfig } from "axios";
 
 jest.mock("axios");
 
@@ -32,10 +32,11 @@ const doorbirdOptions: DoorbirdOptions = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockResponse = (payload?: any, statusCode = 200) => {
+const mockResponse = (payload?: any, statusCode = 200, headers: RawAxiosResponseHeaders | undefined = undefined) => {
   return {
     status: statusCode,
     data: payload,
+    headers: headers
   };
 };
 
@@ -213,13 +214,14 @@ describe("Doorbird Client", () => {
   });
 
   test("createFavorite", (done) => {
-    (axios.get as unknown as jest.Mock).mockResolvedValueOnce(mockResponse());
+    (axios.get as unknown as jest.Mock).mockResolvedValueOnce(mockResponse(undefined, 200, {'favoriteid': '1'}));
     doorbird
       .createFavorite(FavoriteType.http, {
         title: "Fav0",
         value: "http://myserver.local/api",
       })
-      .then(() => {
+      .then(response => {
+        expect(response).toEqual('1');
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/favorites.cgi?action=save&type=http&title=Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi"
@@ -233,13 +235,14 @@ describe("Doorbird Client", () => {
   });
 
   test("updateFavorite", (done) => {
-    (axios.get as unknown as jest.Mock).mockResolvedValueOnce(mockResponse());
+    (axios.get as unknown as jest.Mock).mockResolvedValueOnce(mockResponse(undefined, 200, {'favoriteid': '1'}));
     doorbird
       .updateFavorite("Fav0", FavoriteType.http, {
         title: "Fav0",
         value: "http://myserver.local/api",
       })
-      .then(() => {
+      .then(response => {
+        expect(response).toEqual('1');
         expect(axios.get).toHaveBeenLastCalledWith(
           uriParam(
             "/bha-api/favorites.cgi?action=save&type=http&title=Fav0&value=http%3A%2F%2Fmyserver.local%2Fapi&id=Fav0"

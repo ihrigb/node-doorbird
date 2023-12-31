@@ -547,7 +547,7 @@ export default class Doorbird {
   createFavorite(
     type: FavoriteType,
     favoriteInfo: FavoriteInfo
-  ): Promise<void> {
+  ): Promise<string> {
     return this.doCreateUpdateFavorite(type, favoriteInfo);
   }
 
@@ -563,7 +563,7 @@ export default class Doorbird {
     id: string,
     type: FavoriteType,
     favoriteInfo: FavoriteInfo
-  ): Promise<void> {
+  ): Promise<string> {
     return this.doCreateUpdateFavorite(type, favoriteInfo, id);
   }
 
@@ -571,7 +571,7 @@ export default class Doorbird {
     type: FavoriteType,
     favoriteInfo: FavoriteInfo,
     id?: string
-  ): Promise<void> {
+  ): Promise<string> {
     let url = `/bha-api/favorites.cgi?action=save&type=${type}&title=${encodeURIComponent(
       favoriteInfo.title
     )}&value=${encodeURIComponent(favoriteInfo.value)}`;
@@ -580,7 +580,7 @@ export default class Doorbird {
     }
     const http = await this.getHttp();
     const resp = await http.get<void>(this.uri(url));
-    return resp.data;
+    return resp.headers['favoriteid'];
   }
 
   /**
