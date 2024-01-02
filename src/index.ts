@@ -876,9 +876,9 @@ export default class Doorbird {
    * @returns video url
    */
   getVideoUrl(session?: SessionBHA | string): string {
-    const baseUri = `http://${this.options.host}/bha-api/audio-receive.cgi`;
+    const baseUri = `http://${this.options.host}/bha-api/video.cgi`;
     if (!session) {
-      // Audio stream does not support https.
+      // Video stream does not support https.
       return `${baseUri}?http-user=${this.options.username}&http-password=${this.options.password}`;
     }
 
