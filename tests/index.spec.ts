@@ -529,4 +529,24 @@ describe("Doorbird Client", () => {
         done(err);
       });
   });
+
+  test("getAudioUrl", (done) => {
+    let audioUrl = doorbird.getAudioUrl();
+    expect(audioUrl).toEqual('http://127.0.0.1/bha-api/audio-receive.cgi?http-user=username&http-password=password');
+    audioUrl = doorbird.getAudioUrl('sessionId');
+    expect(audioUrl).toEqual('http://127.0.0.1/bha-api/audio-receive.cgi?sessionid=sessionId');
+    audioUrl = doorbird.getAudioUrl({SESSIONID: 'sessionId', NOTIFICATION_ENCRYPTION_KEY: '', RETURNCODE: '1'});
+    expect(audioUrl).toEqual('http://127.0.0.1/bha-api/audio-receive.cgi?sessionid=sessionId');
+    done();
+  });
+
+  test("getVideoUrl", (done) => {
+    let audioUrl = doorbird.getVideoUrl();
+    expect(audioUrl).toEqual('http://127.0.0.1/bha-api/video.cgi?http-user=username&http-password=password');
+    audioUrl = doorbird.getVideoUrl('sessionId');
+    expect(audioUrl).toEqual('http://127.0.0.1/bha-api/video.cgi?sessionid=sessionId');
+    audioUrl = doorbird.getVideoUrl({SESSIONID: 'sessionId', NOTIFICATION_ENCRYPTION_KEY: '', RETURNCODE: '1'});
+    expect(audioUrl).toEqual('http://127.0.0.1/bha-api/video.cgi?sessionid=sessionId');
+    done();
+  });
 });
