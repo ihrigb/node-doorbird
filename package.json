@@ -1,16 +1,13 @@
 {
   "name": "doorbird",
   "version": "2.5.2",
-  "description": "",
+  "description": "Node JS library for the Doorbird LAN API.",
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint . --ext .ts",
-    "test": "npm run lint && npm run build && jest",
+    "test": "npm run lint && jest",
     "coverage": "jest --coverage",
-    "build": "rm -rf dist && tsc",
-    "clean": "rm -rf node_modules && rm -rf dist",
-    "reinstall": "npm run clean && npm install",
-    "rebuild": "npm run clean && npm install && npm run build && npm run test"
+    "build": "tsc --build --clean"
   },
   "repository": {
     "type": "git",
