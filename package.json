@@ -1,6 +1,6 @@
 {
   "name": "doorbird",
-  "version": "2.5.2",
+  "version": "2.6.0",
   "description": "Node JS library for the Doorbird LAN API.",
   "main": "dist/index.js",
   "scripts": {
