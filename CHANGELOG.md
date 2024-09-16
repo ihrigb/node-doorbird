@@ -18,4 +18,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Node v16.x support
 
-[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.6.9...HEAD
+[unreleased]: https://github.com/ihrigb/node-doorbird/compare/v2.6.9...HEAD
