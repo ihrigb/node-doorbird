@@ -7,7 +7,7 @@
     "lint": "eslint . --ext .ts",
     "test": "npm run lint && jest",
     "coverage": "jest --coverage",
-    "build": "tsc --build --clean"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",

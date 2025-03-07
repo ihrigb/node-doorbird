@@ -263,6 +263,7 @@ export class DoorbirdUdpSocket {
   private password: string;
   private client: Doorbird;
   private suppressBurst: boolean;
+  private debug = false;
   private server: dgram.Socket;
   private lastEventTimestamp = 0;
   private ringListeners: RingCallback[] = [];
@@ -283,12 +284,14 @@ export class DoorbirdUdpSocket {
     username: string,
     password: string,
     client: Doorbird,
-    suppressBurst = false
+    suppressBurst = false,
+    debug = false
   ) {
     this.username = username;
     this.password = password;
     this.client = client;
     this.suppressBurst = suppressBurst;
+    this.debug = debug;
     this.server = dgram.createSocket({
       type: "udp4",
       reuseAddr: true,
@@ -296,6 +299,17 @@ export class DoorbirdUdpSocket {
     this.server.bind(port);
     this.server.on("message", this.onMessage);
   }
+
+  private log = (msg: unknown) => {
+    if (!this.debug) {
+      return;
+    }
+    if (typeof msg === 'function') {
+      console.log(msg());
+      return;
+    }
+    console.log(msg);
+  };
 
   private strech = async (salt: Buffer, opslimit: Buffer, memlimit: Buffer) => {
     await libsodium.ready;
@@ -314,35 +328,49 @@ export class DoorbirdUdpSocket {
   };
 
   private onMessage = async (msg: Buffer) => {
+    this.log(() => 'Received UDP message.');
+    this.log(msg);
+
     const identifier = msg.subarray(0, 3);
     const version = msg.subarray(3, 4);
 
+    this.log(() => `Identifier: "${identifier}", Version: "${version}".`);
+
     if (udpIdentifier.toString("base64") !== identifier.toString("base64")) {
+      this.log('Identifier does not match.');
       return;
     }
 
+    if (version[0] === 0x01) {
+      await this.handleV1(msg);
+    } else if (version[0] == 0x02) {
+      await this.handleV2(msg);
+    } else {
+      throw new Error("Unsupported version of UDP package.");
+    }
+  };
+
+  private handleV1 = async(msg: Buffer) => {
     if (this.suppressBurst) {
+      this.log('Checking burst suppression.');
       const eventTimestamp = new Date().valueOf();
       if (eventTimestamp - this.lastEventTimestamp < 1000) {
+        this.log('Suppressing message due to burst detection.');
         return;
       }
       this.lastEventTimestamp = eventTimestamp;
     }
 
-    let decrypted;
-    if (version[0] === 0x01) {
-      decrypted = await this.decryptV1(msg);
-    } else if (version[0] === 0x02) {
-      decrypted = await this.decryptV2(msg);
-    } else {
-      throw new Error("Unsupported version of UDP package.");
-    }
+    const decrypted = await this.decryptV1(msg);
 
     const intercomId = decrypted.subarray(0, 6);
     const event = decrypted.subarray(6, 14);
     const timestamp = decrypted.subarray(14, 18);
 
+    this.log(() => `IntercomId: "${intercomId}", Event: "${event}", Timestamp: "${timestamp}".`);
+
     if (this.username.substring(0, 6) !== intercomId.toString("utf-8")) {
+      this.log('Username prefix missmatch.');
       return;
     }
 
@@ -352,6 +380,7 @@ export class DoorbirdUdpSocket {
     const trimmedEvent = event.toString("utf-8").trim();
 
     if ("motion" === trimmedEvent) {
+      this.log('Detected motion event.');
       this.motionListeners.forEach((listener) =>
         listener({
           intercomId: intercomId.toString("utf-8"),
@@ -359,6 +388,7 @@ export class DoorbirdUdpSocket {
         })
       );
     } else {
+      this.log('Detected ring event.');
       this.ringListeners.forEach((listener) =>
         listener({
           intercomId: intercomId.toString("utf-8"),
@@ -367,9 +397,58 @@ export class DoorbirdUdpSocket {
         })
       );
     }
-  };
+  }
 
-  private decryptV1 = async (msg: Buffer) => {
+  private handleV2 = async(msg: Buffer) => {
+    const decrypted = await this.decryptV2(msg);
+
+    const intercomId = decrypted.subarray(0, 6);
+    const event = decrypted.subarray(6, 14);
+    const timestamp = decrypted.subarray(14, 18);
+
+    this.log(() => `IntercomId: "${intercomId}", Event: "${event}", Timestamp: "${timestamp}".`);
+
+    if (this.username.substring(0, 6) !== intercomId.toString("utf-8")) {
+      this.log('Username prefix missmatch.');
+      return;
+    }
+
+    if (this.suppressBurst) {
+      this.log('Checking burst suppression.');
+      const eventTimestamp = new Date().valueOf();
+      if (eventTimestamp - this.lastEventTimestamp < 1000) {
+        this.log('Suppressing message due to burst detection.');
+        return;
+      }
+      this.lastEventTimestamp = eventTimestamp;
+    }
+
+    const date = new Date(0);
+    date.setUTCSeconds(timestamp.readInt32BE());
+
+    const trimmedEvent = event.toString("utf-8").trim();
+
+    if ("motion" === trimmedEvent) {
+      this.log('Detected motion event.');
+      this.motionListeners.forEach((listener) =>
+        listener({
+          intercomId: intercomId.toString("utf-8"),
+          timestamp: date,
+        })
+      );
+    } else {
+      this.log('Detected ring event.');
+      this.ringListeners.forEach((listener) =>
+        listener({
+          intercomId: intercomId.toString("utf-8"),
+          event: trimmedEvent,
+          timestamp: date,
+        })
+      );
+    }
+  }
+
+  private decryptV1 = async (msg: Buffer): Promise<Buffer> => {
     const opslimit = msg.subarray(4, 8);
     const memlimit = msg.subarray(8, 12);
     const salt = msg.subarray(12, 28);
@@ -807,13 +886,14 @@ export default class Doorbird {
    * @param suppressBurst suppress multiple UDP messages into a single callback
    * @returns DoorbirdUdpSocket object
    */
-  startUdpSocket(port: 6524 | 35344, suppressBurst = false): DoorbirdUdpSocket {
+  startUdpSocket(port: 6524 | 35344, suppressBurst = false, debug = false): DoorbirdUdpSocket {
     return new DoorbirdUdpSocket(
       port,
       this.options.username,
       this.options.password,
       this,
-      suppressBurst
+      suppressBurst,
+      debug
     );
   }
 
