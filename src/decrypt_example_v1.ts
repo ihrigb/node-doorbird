@@ -4,7 +4,7 @@ import * as chacha from "chacha-js";
 const argonKeyLength = 32;
 const password = 'QzT3jeK3JY';
 
-const strech = async (salt: Buffer, opslimit: Buffer, memlimit: Buffer) => {
+const strech = async (salt: Uint8Array, opslimit: Buffer, memlimit: Buffer) => {
     await libsodium.ready;
     const sodium = libsodium;
     const streched = Buffer.from(
@@ -32,7 +32,7 @@ const identifier = msg.subarray(0, 3);
 const version = msg.subarray(3, 4);
 const opslimit = msg.subarray(4, 8);
 const memlimit = msg.subarray(8, 12);
-const salt = msg.subarray(12, 28);
+const salt = new Uint8Array(msg.subarray(12, 28));
 const nonce = msg.subarray(28, 36);
 const ciphertext = msg.subarray(36, 70);
 
