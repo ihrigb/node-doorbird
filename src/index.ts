@@ -311,7 +311,7 @@ export class DoorbirdUdpSocket {
     console.log(msg);
   };
 
-  private strech = async (salt: Buffer, opslimit: Buffer, memlimit: Buffer) => {
+  private strech = async (salt: Uint8Array, opslimit: Buffer, memlimit: Buffer) => {
     await libsodium.ready;
     const sodium = libsodium;
     const streched = Buffer.from(
@@ -451,7 +451,7 @@ export class DoorbirdUdpSocket {
   private decryptV1 = async (msg: Buffer): Promise<Buffer> => {
     const opslimit = msg.subarray(4, 8);
     const memlimit = msg.subarray(8, 12);
-    const salt = msg.subarray(12, 28);
+    const salt = new Uint8Array(msg.subarray(12, 28));
     const nonce = msg.subarray(28, 36);
     const ciphertext = msg.subarray(36, 70);
 
